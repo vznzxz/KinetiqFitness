@@ -1,0 +1,24 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: kinetiq-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: kinetiq_db
+      MYSQL_USER: kinetiq
+      MYSQL_PASSWORD: kinetiqpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - kinetiq_mysql_data:/var/lib/mysql
+      - ./backend/src/main/resources/schema-mysql.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  kinetiq_mysql_data:
+    driver: local

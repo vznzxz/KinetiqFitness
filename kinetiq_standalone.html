@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kinetiq — Next-Gen Online Fitness Tracking Application</title>
+  <meta name="description" content="Online Fitness Tracking Application with dedicated Admin and User dashboards, workout logging, progress tracking, challenges, and content management." />
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              cyan: '#06b6d4',
+              blue: '#3b82f6',
+              purple: '#8b5cf6',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React 18 & Babel Standalone CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      background-color: #020617;
+      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(51, 65, 85, 0.8);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 116, 139, 0.9);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-cyan-500 selection:text-black">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, createContext, useContext } = React;
+
+    // --- MOCK DATA ---
+    const INITIAL_USERS = [
+      {
+        id: "usr-1",
+        name: "Sarah Jenkins",
+        email: "sarah.j@example.com",
+        role: "User",
+        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+        status: "Active",
+        joinedDate: "2024-01-15",
+        fitnessGoal: "Weight Loss & Endurance",
+        activityLevel: "Very Active",
+        height: 168,
+        weight: 62.5,
+        targetWeight: 59.0,
+        dailyCalorieTarget: 2100,
+        streakDays: 14,
+        points: 1250,
+      },
+      {
+        id: "usr-2",
+        name: "Dave Miller",
+        email: "admin.dave@kinetiq.io",
+        role: "Admin",
+        avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+        status: "Active",
+        joinedDate: "2023-11-01",
+        fitnessGoal: "Muscle Hypertrophy",
+        activityLevel: "Moderate",
+        height: 182,
+        weight: 81.0,
+        targetWeight: 82.0,
+        dailyCalorieTarget: 2600,
+        streakDays: 8,
+        points: 2100,
+      },
+      {
+        id: "usr-3",
+        name: "Marcus Vance",
+        email: "marcus.vance@fitmail.com",
+        role: "User",
+        avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80",
+        status: "Active",
+        joinedDate: "2024-02-10",
+        fitnessGoal: "Strength & Powerlifting",
+        activityLevel: "Extremely Active",
+        height: 178,
+        weight: 88.0,
+        targetWeight: 85.0,
+        dailyCalorieTarget: 3000,
+        streakDays: 22,
+        points: 1890,
+      },
+      {
+        id: "usr-4",
+        name: "Elena Rostova",
+        email: "elena.r@lifestyle.org",
+        role: "User",
+        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        status: "Active",
+        joinedDate: "2024-03-05",
+        fitnessGoal: "Flexibility & Posture",
+        activityLevel: "Lightly Active",
+        height: 165,
+        weight: 55.0,
+        targetWeight: 55.0,
+        dailyCalorieTarget: 1850,
+        streakDays: 6,
+        points: 920,
+      }
+    ];
+
+    const INITIAL_WORKOUTS = [
+      {
+        id: "wo-1",
+        userId: "usr-1",
+        userName: "Sarah Jenkins",
+        type: "Cardio",
+        title: "Morning Riverbed Sprint & Jog",
+        duration: 45,
+        intensity: "High",
+        calories: 420,
+        date: "2026-10-08",
+        notes: "Maintained 155 bpm average heart rate, covered 6.8 km on trail.",
+        exercises: [{ name: "Warmup Jog", sets: 1, reps: "10 min" }, { name: "Interval Sprints", sets: 6, reps: "30s max" }]
+      },
+      {
+        id: "wo-2",
+        userId: "usr-1",
+        userName: "Sarah Jenkins",
+        type: "Strength",
+        title: "Lower Body Compound Power",
+        duration: 55,
+        intensity: "Medium",
+        calories: 380,
+        date: "2026-10-07",
+        notes: "Focused on depth for Romanian deadlifts and Bulgarian split squats.",
+        exercises: [{ name: "Back Squats", sets: 4, reps: "8-10 (65kg)" }, { name: "RDLs", sets: 3, reps: "10 (70kg)" }]
+      },
+      {
+        id: "wo-3",
+        userId: "usr-1",
+        userName: "Sarah Jenkins",
+        type: "HIIT",
+        title: "Tabata Full Body Burner",
+        duration: 30,
+        intensity: "Extreme",
+        calories: 350,
+        date: "2026-10-05",
+        notes: "High intensity Tabata cycles with kettlebell swings.",
+        exercises: [{ name: "Burpees", sets: 4, reps: "20s work" }, { name: "KB Swings", sets: 4, reps: "18kg" }]
+      },
+      {
+        id: "wo-4",
+        userId: "usr-1",
+        userName: "Sarah Jenkins",
+        type: "Yoga",
+        title: "Vinyasa Mobility & Spine Flow",
+        duration: 40,
+        intensity: "Low",
+        calories: 160,
+        date: "2026-10-04",
+        notes: "Great hip decompression sequence.",
+        exercises: [{ name: "Sun Salutations", sets: 5, reps: "Flow" }]
+      }
+    ];
+
+    const INITIAL_CONTENT = [
+      {
+        id: "cnt-1",
+        title: "Optimal Protein Timing for Hypertrophy & Recovery",
+        category: "Nutrition",
+        author: "Elena Rostova",
+        authorRole: "User",
+        summary: "Science-backed breakdown of leucine thresholds and post-workout nutrient windows.",
+        content: "Consuming 25-40g of high biological value protein every 3 to 4 hours maximizes Muscle Protein Synthesis (MPS). Prioritize whole food sources supplemented with isolate post-resistance training to enhance muscle repair.",
+        readTime: "5 min read",
+        status: "Approved",
+        submittedDate: "2026-10-03",
+      },
+      {
+        id: "cnt-2",
+        title: "Mastering the Deadlift: 5 Form Cues to Protect Your Spine",
+        category: "Technique",
+        author: "Marcus Vance",
+        authorRole: "User",
+        summary: "From wedge mechanics to lat engagement, eliminate lower back stress on heavy pulls.",
+        content: "1. Pull slack out of the barbell before initiating lift.\n2. Engage lats by pretending to bend the bar.\n3. Push the floor away through mid-foot.\n4. Lock hips and knees simultaneously.",
+        readTime: "7 min read",
+        status: "Approved",
+        submittedDate: "2026-10-04",
+      },
+      {
+        id: "cnt-3",
+        title: "Zone 2 Cardio: The Longevity & Mitochondrial Superpower",
+        category: "Workout Plan",
+        author: "Sarah Jenkins",
+        authorRole: "User",
+        summary: "Why low-intensity steady state (LISS) training is the foundation of peak aerobic performance.",
+        content: "Training in Zone 2 builds dense mitochondrial networks, improves fat oxidation efficiency, and reduces systemic fatigue. Aim for 150-180 minutes weekly.",
+        readTime: "6 min read",
+        status: "Pending",
+        submittedDate: "2026-10-07",
+      }
+    ];
+
+    const INITIAL_CHALLENGES = [
+      {
+        id: "ch-1",
+        title: "30-Day Core Crusher",
+        category: "Core & Stability",
+        difficulty: "Intermediate",
+        durationDays: 30,
+        targetGoal: "Complete 25 out of 30 daily sessions",
+        participantsCount: 342,
+        rewardBadge: "🏆 Core Titan",
+        rewardPoints: 500,
+        userStatus: "Joined",
+        userProgress: 8,
+        totalDays: 30,
+        description: "Daily progressive abdominal and stabilizer routines: hollow body holds, side planks, and leg raises."
+      },
+      {
+        id: "ch-2",
+        title: "100 km Cycling & Running Sprint",
+        category: "Endurance",
+        difficulty: "Advanced",
+        durationDays: 21,
+        targetGoal: "Cover 100.0 km total distance",
+        participantsCount: 218,
+        rewardBadge: "⚡ Century Pioneer",
+        rewardPoints: 750,
+        userStatus: "Joined",
+        userProgress: 14,
+        totalDays: 21,
+        description: "Log a cumulative 100 kilometers across road runs or outdoor/stationary cycling."
+      },
+      {
+        id: "ch-3",
+        title: "10,000 Steps Daily Blitz",
+        category: "Daily Activity",
+        difficulty: "Beginner",
+        durationDays: 14,
+        targetGoal: "14 consecutive 10,000-step days",
+        participantsCount: 512,
+        rewardBadge: "👟 Step Master",
+        rewardPoints: 300,
+        userStatus: "Not Joined",
+        userProgress: 0,
+        totalDays: 14,
+        description: "Build effortless daily movement habits. Hit 10k steps every day for 14 days."
+      }
+    ];
+
+    const INITIAL_CHALLENGE_HISTORY = [
+      { id: "hist-1", title: "Autumn Cardio Blitz (50 km)", category: "Cardio", date: "2026-09-28", result: "Completed", rank: "#14 of 420", badge: "🍁 Fall Pacer", points: 450 },
+      { id: "hist-2", title: "21-Day Mindfulness & Yoga", category: "Mobility", date: "2026-09-05", result: "Completed", rank: "#8 of 180", badge: "🧘 Zen Disciple", points: 350 },
+      { id: "hist-3", title: "Summer Shred 45-Day High Intensity", category: "HIIT", date: "2026-08-15", result: "Partial (82%)", rank: "#55 of 600", badge: "🔥 Summer Warrior", points: 280 }
+    ];
+
+    const WEIGHT_HISTORY = [
+      { date: "Sep 08", weight: 64.8 },
+      { date: "Sep 15", weight: 64.2 },
+      { date: "Sep 22", weight: 63.7 },
+      { date: "Sep 29", weight: 63.1 },
+      { date: "Oct 06", weight: 62.5 }
+    ];
+
+    // --- APP CONTEXT ---
+    const AppContext = createContext(null);
+
+    const AppProvider = ({ children }) => {
+      const [users, setUsers] = useState(() => {
+        const saved = localStorage.getItem('kinetiq_s_users');
+        return saved ? JSON.parse(saved) : INITIAL_USERS;
+      });
+      const [currentUser, setCurrentUser] = useState(() => users[0]);
+      const [workouts, setWorkouts] = useState(() => {
+        const saved = localStorage.getItem('kinetiq_s_workouts');
+        return saved ? JSON.parse(saved) : INITIAL_WORKOUTS;
+      });
+      const [content, setContent] = useState(() => {
+        const saved = localStorage.getItem('kinetiq_s_content');
+        return saved ? JSON.parse(saved) : INITIAL_CONTENT;
+      });
+      const [challenges, setChallenges] = useState(() => {
+        const saved = localStorage.getItem('kinetiq_s_challenges');
+        return saved ? JSON.parse(saved) : INITIAL_CHALLENGES;
+      });
+      const [weightHistory, setWeightHistory] = useState(WEIGHT_HISTORY);
+      const [toasts, setToasts] = useState([]);
+      const [activityLogs, setActivityLogs] = useState([
+        { id: '1', action: 'Workout Logged', details: 'Sarah Jenkins logged 45 min Cardio', time: 'Just now' },
+        { id: '2', action: 'Content Approved', details: 'Admin Dave approved "Optimal Protein Timing"', time: '15m ago' },
+        { id: '3', action: 'Challenge Joined', details: 'Marcus Vance joined 100km Challenge', time: '1h ago' }
+      ]);
+      const [systemSettings, setSystemSettings] = useState({
+        platformName: "Kinetiq",
+        maintenanceMode: false,
+        openRegistration: true,
+        defaultUnit: "Metric",
+        calorieTarget: 2200,
+        enableAI: true
+      });
+
+      useEffect(() => {
+        localStorage.setItem('kinetiq_s_users', JSON.stringify(users));
+      }, [users]);
+      useEffect(() => {
+        localStorage.setItem('kinetiq_s_workouts', JSON.stringify(workouts));
+      }, [workouts]);
+      useEffect(() => {
+        localStorage.setItem('kinetiq_s_content', JSON.stringify(content));
+      }, [content]);
+      useEffect(() => {
+        localStorage.setItem('kinetiq_s_challenges', JSON.stringify(challenges));
+      }, [challenges]);
+
+      const showToast = (message, type = 'success', title = 'Success') => {
+        const id = Date.now().toString();
+        setToasts(prev => [{ id, message, type, title }, ...prev].slice(0, 4));
+        setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+      };
+
+      const switchUser = (id) => {
+        const target = users.find(u => u.id === id);
+        if (target) {
+          setCurrentUser(target);
+          showToast(`Switched active view to ${target.name} (${target.role})`, 'info', 'Persona Changed');
+        }
+      };
+
+      // Workouts
+      const logWorkout = (wo) => {
+        const newWo = {
+          id: `wo-${Date.now()}`,
+          userId: currentUser.id,
+          userName: currentUser.name,
+          ...wo
+        };
+        setWorkouts(prev => [newWo, ...prev]);
+        setActivityLogs(prev => [{ id: Date.now().toString(), action: 'Workout Logged', details: `${currentUser.name} logged ${newWo.title}`, time: 'Just now' }, ...prev]);
+        showToast(`Workout "${newWo.title}" logged successfully!`, 'success', 'Workout Saved');
+      };
+
+      const deleteWorkout = (id) => {
+        setWorkouts(prev => prev.filter(w => w.id !== id));
+        showToast('Workout successfully deleted.', 'success', 'Workout Removed');
+      };
+
+      // Users
+      const createUser = (u) => {
+        const newUser = {
+          id: `usr-${Date.now()}`,
+          ...u,
+          avatar: `https://images.unsplash.com/photo-${1534528741775 + Math.floor(Math.random() * 50000)}?w=150&auto=format&fit=crop&q=80`,
+          streakDays: 0,
+          points: 100,
+          joinedDate: new Date().toISOString().split('T')[0]
+        };
+        setUsers(prev => [newUser, ...prev]);
+        showToast(`User account "${newUser.name}" successfully created.`, 'success', 'User Created');
+      };
+
+      const updateUser = (id, fields) => {
+        setUsers(prev => prev.map(u => u.id === id ? { ...u, ...fields } : u));
+        if (currentUser.id === id) setCurrentUser(prev => ({ ...prev, ...fields }));
+        showToast('User account successfully updated.', 'success', 'User Updated');
+      };
+
+      const deleteUser = (id) => {
+        if (currentUser.id === id) {
+          showToast('Cannot delete currently active account.', 'error', 'Action Restricted');
+          return;
+        }
+        setUsers(prev => prev.filter(u => u.id !== id));
+        showToast('User account successfully deleted.', 'success', 'User Deleted');
+      };
+
+      // Content Moderation
+      const approveContent = (id) => {
+        setContent(prev => prev.map(c => c.id === id ? { ...c, status: 'Approved' } : c));
+        showToast('Content approved and published to the community!', 'success', 'Content Approved');
+      };
+
+      const rejectContent = (id, reason) => {
+        setContent(prev => prev.map(c => c.id === id ? { ...c, status: 'Rejected', rejectionReason: reason } : c));
+        showToast('Content submission rejected with feedback.', 'warning', 'Content Rejected');
+      };
+
+      // Challenges
+      const joinChallenge = (id) => {
+        setChallenges(prev => prev.map(c => c.id === id ? { ...c, userStatus: 'Joined', participantsCount: c.participantsCount + 1, userProgress: 1 } : c));
+        showToast('Challenge joined successfully! Daily progress tracking active.', 'success', 'Challenge Joined');
+      };
+
+      const checkInChallenge = (id) => {
+        setChallenges(prev => prev.map(c => c.id === id ? { ...c, userProgress: Math.min(c.totalDays, c.userProgress + 1) } : c));
+        showToast('Daily challenge check-in recorded! Keep up the momentum.', 'success', 'Check-in Saved');
+      };
+
+      // Weight
+      const logWeight = (wt) => {
+        const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        setWeightHistory(prev => [...prev, { date: today, weight: Number(wt) }]);
+        setCurrentUser(prev => ({ ...prev, weight: Number(wt) }));
+        showToast(`New weigh-in recorded: ${wt} kg.`, 'success', 'Progress Logged');
+      };
+
+      // System Settings
+      const saveSettings = (newSettings) => {
+        setSystemSettings(newSettings);
+        showToast('System configuration settings updated successfully.', 'success', 'Settings Saved');
+      };
+
+      const resetDemo = () => {
+        localStorage.clear();
+        setUsers(INITIAL_USERS);
+        setCurrentUser(INITIAL_USERS[0]);
+        setWorkouts(INITIAL_WORKOUTS);
+        setContent(INITIAL_CONTENT);
+        setChallenges(INITIAL_CHALLENGES);
+        setWeightHistory(WEIGHT_HISTORY);
+        showToast('Demo data restored to initial defaults.', 'info', 'Reset Complete');
+      };
+
+      return (
+        <AppContext.Provider value={{
+          users, currentUser, switchUser, createUser, updateUser, deleteUser,
+          workouts, logWorkout, deleteWorkout,
+          content, approveContent, rejectContent,
+          challenges, joinChallenge, checkInChallenge,
+          weightHistory, logWeight,
+          activityLogs, systemSettings, saveSettings,
+          toasts, showToast, resetDemo
+        }}>
+          {children}
+        </AppContext.Provider>
+      );
+    };
+
+    const useApp = () => useContext(AppContext);
+
+    // --- MAIN COMPONENT ---
+    function App() {
+      const {
+        users, currentUser, switchUser, createUser, updateUser, deleteUser,
+        workouts, logWorkout, deleteWorkout,
+        content, approveContent, rejectContent,
+        challenges, joinChallenge, checkInChallenge,
+        weightHistory, logWeight,
+        activityLogs, systemSettings, saveSettings,
+        toasts, resetDemo, showToast
+      } = useApp();
+
+      const isAdmin = currentUser.role === 'Admin';
+      const [activeTab, setActiveTab] = useState('workouts');
+
+      // Modals
+      const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
+      const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+
+      // Workout Form State
+      const [woType, setWoType] = useState('Cardio');
+      const [woTitle, setWoTitle] = useState('');
+      const [woDuration, setWoDuration] = useState(45);
+      const [woIntensity, setWoIntensity] = useState('Medium');
+      const [woCalories, setWoCalories] = useState(350);
+      const [woNotes, setWoNotes] = useState('');
+
+      // Auto calculate calories
+      useEffect(() => {
+        const mult = woIntensity === 'Extreme' ? 12 : woIntensity === 'High' ? 9.5 : woIntensity === 'Medium' ? 7.2 : 4.5;
+        setWoCalories(Math.round(woDuration * mult));
+      }, [woDuration, woIntensity]);
+
+      const handleSaveWorkout = (e) => {
+        e.preventDefault();
+        logWorkout({
+          type: woType,
+          title: woTitle || `${woType} Session`,
+          duration: Number(woDuration),
+          intensity: woIntensity,
+          calories: Number(woCalories),
+          date: new Date().toISOString().split('T')[0],
+          notes: woNotes
+        });
+        setIsWorkoutModalOpen(false);
+        setWoTitle('');
+        setWoNotes('');
+      };
+
+      // Add User Form State
+      const [newUserName, setNewUserName] = useState('');
+      const [newUserEmail, setNewUserEmail] = useState('');
+      const [newUserRole, setNewUserRole] = useState('User');
+      const [newUserGoal, setNewUserGoal] = useState('Weight Loss');
+
+      const handleSaveUser = (e) => {
+        e.preventDefault();
+        if (!newUserName || !newUserEmail) return;
+        createUser({
+          name: newUserName,
+          email: newUserEmail,
+          role: newUserRole,
+          status: 'Active',
+          fitnessGoal: newUserGoal,
+          height: 172,
+          weight: 70,
+          targetWeight: 67
+        });
+        setIsUserModalOpen(false);
+        setNewUserName('');
+        setNewUserEmail('');
+      };
+
+      // Weight Log input
+      const [weighInput, setWeighInput] = useState('');
+
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+          
+          {/* HEADER / NAVBAR */}
+          <header className="sticky top-0 z-40 w-full border-b border-slate-800 bg-slate-950/80 backdrop-blur-xl">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+              
+              {/* Brand Logo */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-cyan-500/20">
+                  K
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xl font-black text-white">Kinet<span className="text-cyan-400">iq</span></span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase">Online Fitness</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 hidden sm:block">GUVI Online Fitness Tracking Platform</p>
+                </div>
+              </div>
+
+              {/* Persona Switcher Pill */}
+              <div className="flex items-center p-1 bg-slate-900 border border-slate-800 rounded-xl">
+                <button
+                  onClick={() => {
+                    const u = users.find(x => x.role === 'User') || users[0];
+                    switchUser(u.id);
+                    setActiveTab('workouts');
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    !isAdmin ? 'bg-cyan-500 text-black shadow-md' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  👤 User Mode
+                </button>
+                <button
+                  onClick={() => {
+                    const a = users.find(x => x.role === 'Admin') || users[1];
+                    switchUser(a.id);
+                    setActiveTab('admin-stats');
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    isAdmin ? 'bg-purple-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  🛡️ Admin Mode
+                </button>
+              </div>
+
+              {/* Actions & Profile */}
+              <div className="flex items-center gap-3">
+                {!isAdmin ? (
+                  <button
+                    onClick={() => setIsWorkoutModalOpen(true)}
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold shadow-md shadow-cyan-500/20 hover:opacity-90"
+                  >
+                    + Log Workout
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setIsUserModalOpen(true)}
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs font-bold shadow-md shadow-purple-500/20 hover:opacity-90"
+                  >
+                    + Add User
+                  </button>
+                )}
+
+                <button
+                  onClick={resetDemo}
+                  title="Reset Demo Data"
+                  className="p-2 text-slate-400 hover:text-white bg-slate-900 border border-slate-800 rounded-xl text-xs"
+                >
+                  ↺ Reset
+                </button>
+
+                <div className="flex items-center gap-2 p-1.5 bg-slate-900 border border-slate-800 rounded-xl">
+                  <img src={currentUser.avatar} className="w-7 h-7 rounded-lg object-cover" />
+                  <span className="text-xs font-bold hidden md:inline">{currentUser.name}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Sub Nav Tabs */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/60 flex items-center gap-2 overflow-x-auto py-2">
+              {!isAdmin ? (
+                <>
+                  {[
+                    { id: 'workouts', label: 'Workout Log' },
+                    { id: 'progress', label: 'Progress Tracking' },
+                    { id: 'challenges', label: 'Fitness Challenges' },
+                    { id: 'guidance', label: 'Guidance & Advice' },
+                    { id: 'profile', label: 'Profile Management' }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        activeTab === tab.id
+                          ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 font-bold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {[
+                    { id: 'admin-stats', label: 'Dashboard & Statistics' },
+                    { id: 'admin-users', label: 'User Management' },
+                    { id: 'admin-content', label: 'Content Moderation' },
+                    { id: 'admin-settings', label: 'System Settings' },
+                    { id: 'admin-activity', label: 'Activity Monitoring' }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        activeTab === tab.id
+                          ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30 font-bold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          </header>
+
+          {/* MAIN CONTENT CONTAINER */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+            {/* USER VIEW: WORKOUT LOG */}
+            {!isAdmin && activeTab === 'workouts' && (
+              <div className="space-y-6">
+                {/* User Stats Card */}
+                <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/40 border border-slate-800 shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
+                  <div>
+                    <h2 className="text-2xl font-black text-white">Welcome, {currentUser.name}!</h2>
+                    <p className="text-xs text-slate-400 mt-1">Goal: <strong className="text-cyan-400">{currentUser.fitnessGoal}</strong> • Active Streak: <strong className="text-amber-400">{currentUser.streakDays} Days</strong></p>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl text-center min-w-[100px]">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Workouts</span>
+                      <span className="text-lg font-black text-white">{workouts.length}</span>
+                    </div>
+                    <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl text-center min-w-[100px]">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Burned</span>
+                      <span className="text-lg font-black text-rose-400">{workouts.reduce((a,b)=>a+b.calories, 0)} kcal</span>
+                    </div>
+                    <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl text-center min-w-[100px]">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Weight</span>
+                      <span className="text-lg font-black text-cyan-400">{currentUser.weight} kg</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Workout Log Table */}
+                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                  <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+                    <h3 className="text-base font-bold text-white">Logged Workouts & History</h3>
+                    <button
+                      onClick={() => setIsWorkoutModalOpen(true)}
+                      className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold"
+                    >
+                      + Log New
+                    </button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-950/70 text-slate-400 text-[11px] uppercase tracking-wider border-b border-slate-800">
+                        <tr>
+                          <th className="py-3 px-4">Routine Title</th>
+                          <th className="py-3 px-4">Category</th>
+                          <th className="py-3 px-4">Duration</th>
+                          <th className="py-3 px-4">Intensity</th>
+                          <th className="py-3 px-4">Burned</th>
+                          <th className="py-3 px-4">Date</th>
+                          <th className="py-3 px-4 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {workouts.map(w => (
+                          <tr key={w.id} className="hover:bg-slate-800/40">
+                            <td className="py-3.5 px-4 font-semibold text-white">
+                              {w.title}
+                              {w.notes && <p className="text-xs text-slate-400 font-normal">{w.notes}</p>}
+                            </td>
+                            <td className="py-3.5 px-4"><span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">{w.type}</span></td>
+                            <td className="py-3.5 px-4 text-slate-300 font-mono">{w.duration} min</td>
+                            <td className="py-3.5 px-4"><span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">{w.intensity}</span></td>
+                            <td className="py-3.5 px-4 text-rose-400 font-mono font-bold">{w.calories} kcal</td>
+                            <td className="py-3.5 px-4 text-slate-400 text-xs font-mono">{w.date}</td>
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                onClick={() => deleteWorkout(w.id)}
+                                className="text-slate-500 hover:text-rose-400 text-xs font-bold p-1"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* USER VIEW: PROGRESS TRACKING */}
+            {!isAdmin && activeTab === 'progress' && (
+              <div className="space-y-6">
+                <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl">
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Weight Progression & Target Trajectory</h3>
+                      <p className="text-xs text-slate-400">Target Goal: {currentUser.targetWeight} kg (Current: {currentUser.weight} kg)</p>
+                    </div>
+                    {/* Log Weight Inline */}
+                    <form onSubmit={(e) => { e.preventDefault(); if (weighInput) { logWeight(weighInput); setWeighInput(''); } }} className="flex gap-2">
+                      <input
+                        type="number"
+                        step="0.1"
+                        placeholder="Weight (kg)"
+                        value={weighInput}
+                        onChange={(e)=>setWeighInput(e.target.value)}
+                        className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white w-28"
+                      />
+                      <button type="submit" className="px-4 py-1.5 bg-cyan-600 text-white rounded-xl text-xs font-bold">Log</button>
+                    </form>
+                  </div>
+
+                  {/* SVG Chart */}
+                  <div className="w-full h-48 bg-slate-950/60 rounded-xl p-4 border border-slate-800 flex items-end justify-between gap-4">
+                    {weightHistory.map((item, idx) => {
+                      const h = Math.max(20, (item.weight - 50) * 8);
+                      return (
+                        <div key={idx} className="flex-1 flex flex-col items-center gap-2">
+                          <span className="text-xs font-bold text-cyan-300 font-mono">{item.weight}kg</span>
+                          <div className="w-full bg-cyan-500/60 rounded-t transition-all hover:bg-cyan-400" style={{ height: `${h}px` }}></div>
+                          <span className="text-[10px] text-slate-400 font-mono">{item.date}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* USER VIEW: FITNESS CHALLENGES */}
+            {!isAdmin && activeTab === 'challenges' && (
+              <div className="space-y-6">
+                <h3 className="text-lg font-bold text-white">Active Community Challenges</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {challenges.map(c => (
+                    <div key={c.id} className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between shadow-lg">
+                      <div>
+                        <div className="flex justify-between items-center text-xs mb-2">
+                          <span className="text-cyan-400 font-bold uppercase">{c.category}</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">{c.difficulty}</span>
+                        </div>
+                        <h4 className="text-base font-bold text-white">{c.title}</h4>
+                        <p className="text-xs text-slate-400 mt-1">{c.description}</p>
+                        <div className="mt-3 p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs">
+                          <span className="text-amber-400 font-bold">{c.rewardBadge}</span> (+{c.rewardPoints} pts)
+                        </div>
+                      </div>
+
+                      <div className="mt-5 pt-3 border-t border-slate-800">
+                        {c.userStatus === 'Joined' ? (
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-xs font-mono">
+                              <span className="text-cyan-400 font-bold">In Progress</span>
+                              <span>Day {c.userProgress} / {c.totalDays}</span>
+                            </div>
+                            <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+                              <div className="bg-cyan-500 h-full rounded-full" style={{ width: `${(c.userProgress/c.totalDays)*100}%` }}></div>
+                            </div>
+                            <button
+                              onClick={() => checkInChallenge(c.id)}
+                              className="w-full py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold transition-colors"
+                            >
+                              Check-in Today
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => joinChallenge(c.id)}
+                            className="w-full py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-xs rounded-xl shadow-md"
+                          >
+                            Join Challenge
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Challenge History */}
+                <div className="mt-8 p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl">
+                  <h4 className="text-base font-bold text-white mb-3">Challenge History & Results</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-950 text-slate-400 uppercase">
+                        <tr>
+                          <th className="py-2.5 px-3">Challenge</th>
+                          <th className="py-2.5 px-3">Category</th>
+                          <th className="py-2.5 px-3">Date</th>
+                          <th className="py-2.5 px-3">Result</th>
+                          <th className="py-2.5 px-3">Rank</th>
+                          <th className="py-2.5 px-3">Badge</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {INITIAL_CHALLENGE_HISTORY.map(h => (
+                          <tr key={h.id}>
+                            <td className="py-3 px-3 font-semibold text-white">{h.title}</td>
+                            <td className="py-3 px-3">{h.category}</td>
+                            <td className="py-3 px-3 text-slate-400">{h.date}</td>
+                            <td className="py-3 px-3"><span className="text-emerald-400 font-bold">{h.result}</span></td>
+                            <td className="py-3 px-3 font-mono">{h.rank}</td>
+                            <td className="py-3 px-3 text-amber-400 font-bold">{h.badge}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* USER VIEW: GUIDANCE */}
+            {!isAdmin && activeTab === 'guidance' && (
+              <div className="space-y-6">
+                <div className="p-6 rounded-2xl bg-gradient-to-r from-cyan-950/70 to-slate-900 border border-cyan-500/30 shadow-xl">
+                  <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider block mb-1">Tailored AI Guidance</span>
+                  <h3 className="text-xl font-bold text-white">Active Recovery & Hydration Protocol</h3>
+                  <p className="text-xs text-slate-300 mt-2 max-w-2xl leading-relaxed">
+                    Based on your logged {workouts[0]?.type || 'Cardio'} session of {workouts[0]?.duration || 45} minutes, prioritize 25-30g protein and 20 minutes of myofascial hip and quad stretching to maximize recovery.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {content.filter(c => c.status === 'Approved').map(c => (
+                    <div key={c.id} className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
+                      <div className="flex justify-between items-center text-xs text-slate-400 mb-1">
+                        <span className="text-cyan-400 font-semibold">{c.category}</span>
+                        <span>{c.readTime}</span>
+                      </div>
+                      <h4 className="text-base font-bold text-white">{c.title}</h4>
+                      <p className="text-xs text-slate-400 mt-2">{c.summary}</p>
+                      <p className="text-xs text-slate-300 mt-3 whitespace-pre-line bg-slate-950 p-3 rounded-xl border border-slate-800">{c.content}</p>
+                      <div className="mt-3 text-[11px] text-slate-500">By {c.author} • {c.submittedDate}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* USER VIEW: PROFILE */}
+            {!isAdmin && activeTab === 'profile' && (
+              <div className="max-w-2xl mx-auto p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
+                <h3 className="text-lg font-bold text-white">Profile Management</h3>
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="text-slate-400 block mb-1">Name</label>
+                    <input type="text" defaultValue={currentUser.name} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Email</label>
+                    <input type="email" defaultValue={currentUser.email} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Fitness Goal</label>
+                    <input type="text" defaultValue={currentUser.fitnessGoal} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <button
+                    onClick={() => showToast('Profile details updated successfully.', 'success', 'Profile Updated')}
+                    className="mt-4 px-5 py-2.5 bg-cyan-600 text-white font-bold rounded-xl text-xs shadow-md"
+                  >
+                    Save Profile Changes
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ADMIN VIEW: STATS & OVERVIEW */}
+            {isAdmin && activeTab === 'admin-stats' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg">
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Platform Users</span>
+                    <span className="text-3xl font-extrabold text-white mt-2 block">{users.length}</span>
+                    <span className="text-xs text-emerald-400 font-semibold">+18.4% this month</span>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg">
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Total Workouts</span>
+                    <span className="text-3xl font-extrabold text-cyan-400 mt-2 block">18,450</span>
+                    <span className="text-xs text-slate-400">Over 14,000 hrs</span>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg">
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Challenge Entries</span>
+                    <span className="text-3xl font-extrabold text-amber-400 mt-2 block">1,240</span>
+                    <span className="text-xs text-emerald-400 font-semibold">+12% participation</span>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg">
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Energy Tracked</span>
+                    <span className="text-3xl font-extrabold text-rose-400 mt-2 block">12.4M</span>
+                    <span className="text-xs text-slate-400 font-mono">kcal total</span>
+                  </div>
+                </div>
+
+                <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl">
+                  <h3 className="text-base font-bold text-white mb-2">Monthly User Engagement & Logs Growth</h3>
+                  <div className="w-full h-48 bg-slate-950/60 rounded-xl p-4 border border-slate-800 flex items-end justify-between gap-4">
+                    {[
+                      { m: 'May', v: 9200 },
+                      { m: 'Jun', v: 11400 },
+                      { m: 'Jul', v: 13800 },
+                      { m: 'Aug', v: 15300 },
+                      { m: 'Sep', v: 17200 },
+                      { m: 'Oct', v: 18450 }
+                    ].map((d, i) => (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-purple-300">{(d.v/1000).toFixed(1)}k</span>
+                        <div className="w-full bg-purple-600/70 rounded-t" style={{ height: `${(d.v/20000)*120}px` }}></div>
+                        <span className="text-[11px] text-slate-400">{d.m}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ADMIN VIEW: USER MANAGEMENT */}
+            {isAdmin && activeTab === 'admin-users' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+                  <h3 className="text-base font-bold text-white">Registered Users & Role Management</h3>
+                  <button
+                    onClick={() => setIsUserModalOpen(true)}
+                    className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold"
+                  >
+                    + Add New User
+                  </button>
+                </div>
+
+                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-950/70 text-slate-400 text-[11px] uppercase tracking-wider border-b border-slate-800">
+                      <tr>
+                        <th className="py-3 px-4">User</th>
+                        <th className="py-3 px-4">Role</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4">Goal</th>
+                        <th className="py-3 px-4">Joined</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {users.map(u => (
+                        <tr key={u.id} className="hover:bg-slate-800/40">
+                          <td className="py-3.5 px-4 flex items-center gap-2.5">
+                            <img src={u.avatar} className="w-8 h-8 rounded-lg object-cover" />
+                            <div>
+                              <div className="font-bold text-white">{u.name}</div>
+                              <div className="text-xs text-slate-400">{u.email}</div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4"><span className={`px-2 py-0.5 rounded-full text-xs font-bold ${u.role === 'Admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-cyan-500/20 text-cyan-400'}`}>{u.role}</span></td>
+                          <td className="py-3.5 px-4"><span className="text-emerald-400 text-xs font-bold">{u.status}</span></td>
+                          <td className="py-3.5 px-4 text-xs text-slate-300">{u.fitnessGoal}</td>
+                          <td className="py-3.5 px-4 text-xs font-mono text-slate-400">{u.joinedDate}</td>
+                          <td className="py-3.5 px-4 text-right">
+                            {u.id !== currentUser.id && (
+                              <button
+                                onClick={() => deleteUser(u.id)}
+                                className="text-rose-400 hover:text-rose-300 text-xs font-bold"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* ADMIN VIEW: CONTENT MANAGEMENT */}
+            {isAdmin && activeTab === 'admin-content' && (
+              <div className="space-y-4">
+                <div className="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 flex justify-between items-center">
+                  <h3 className="text-base font-bold text-white">Content Moderation & Review Queue</h3>
+                  <span className="text-xs text-amber-400 font-bold">{content.filter(c => c.status === 'Pending').length} Pending Reviews</span>
+                </div>
+
+                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-950/70 text-slate-400 text-[11px] uppercase tracking-wider border-b border-slate-800">
+                      <tr>
+                        <th className="py-3 px-4">Title</th>
+                        <th className="py-3 px-4">Category</th>
+                        <th className="py-3 px-4">Author</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4 text-right">Moderation Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {content.map(c => (
+                        <tr key={c.id} className="hover:bg-slate-800/40">
+                          <td className="py-3.5 px-4">
+                            <div className="font-bold text-white">{c.title}</div>
+                            <div className="text-xs text-slate-400 line-clamp-1">{c.summary}</div>
+                          </td>
+                          <td className="py-3.5 px-4 text-xs">{c.category}</td>
+                          <td className="py-3.5 px-4 text-xs text-slate-300">{c.author}</td>
+                          <td className="py-3.5 px-4">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                              c.status === 'Approved' ? 'bg-emerald-500/20 text-emerald-400' :
+                              c.status === 'Pending' ? 'bg-amber-500/20 text-amber-400' : 'bg-rose-500/20 text-rose-400'
+                            }`}>
+                              {c.status}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right space-x-2">
+                            {c.status !== 'Approved' && (
+                              <button
+                                onClick={() => approveContent(c.id)}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg"
+                              >
+                                Approve
+                              </button>
+                            )}
+                            {c.status !== 'Rejected' && (
+                              <button
+                                onClick={() => rejectContent(c.id, 'Does not meet editorial guidelines')}
+                                className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg"
+                              >
+                                Reject
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* ADMIN VIEW: SYSTEM SETTINGS */}
+            {isAdmin && activeTab === 'admin-settings' && (
+              <div className="max-w-2xl mx-auto p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
+                <h3 className="text-lg font-bold text-white">System Settings & Parameters</h3>
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="text-slate-400 block mb-1">Platform Name</label>
+                    <input type="text" defaultValue={systemSettings.platformName} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Default Daily Calorie Target</label>
+                    <input type="number" defaultValue={systemSettings.calorieTarget} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center">
+                    <div>
+                      <span className="font-bold text-white block">Maintenance Mode</span>
+                      <span className="text-slate-500 text-[10px]">Lock application for system updates</span>
+                    </div>
+                    <input type="checkbox" defaultChecked={systemSettings.maintenanceMode} className="w-4 h-4 accent-purple-500" />
+                  </div>
+                  <button
+                    onClick={() => saveSettings(systemSettings)}
+                    className="mt-4 px-5 py-2.5 bg-purple-600 text-white font-bold rounded-xl text-xs shadow-md"
+                  >
+                    Save System Settings
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ADMIN VIEW: ACTIVITY MONITOR */}
+            {isAdmin && activeTab === 'admin-activity' && (
+              <div className="space-y-4">
+                <div className="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 flex justify-between items-center">
+                  <h3 className="text-base font-bold text-white">Live System Activity Stream</h3>
+                  <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    Live Streaming
+                  </span>
+                </div>
+
+                <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-3">
+                  {activityLogs.map(log => (
+                    <div key={log.id} className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                      <div>
+                        <span className="font-bold text-white block">{log.action}</span>
+                        <span className="text-slate-400">{log.details}</span>
+                      </div>
+                      <span className="text-slate-500 font-mono">{log.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </main>
+
+          {/* FOOTER */}
+          <footer className="border-t border-slate-800 bg-slate-950/80 py-6 text-xs text-slate-500">
+            <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
+              <span>© 2026 Kinetiq Fitness Tracking Application • GUVI Project</span>
+              <span className="text-emerald-400 font-mono">System Online (v2.4)</span>
+            </div>
+          </footer>
+
+          {/* TOAST CONTAINER */}
+          <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none">
+            {toasts.map(t => (
+              <div
+                key={t.id}
+                className={`p-4 rounded-xl shadow-2xl border text-xs font-semibold backdrop-blur-xl ${
+                  t.type === 'success' ? 'bg-slate-900/95 border-emerald-500/50 text-emerald-300' :
+                  t.type === 'warning' ? 'bg-slate-900/95 border-amber-500/50 text-amber-300' :
+                  t.type === 'error' ? 'bg-slate-900/95 border-rose-500/50 text-rose-300' :
+                  'bg-slate-900/95 border-cyan-500/50 text-cyan-300'
+                }`}
+              >
+                {t.message}
+              </div>
+            ))}
+          </div>
+
+          {/* MODAL: LOG WORKOUT */}
+          {isWorkoutModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+              <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+                <h3 className="text-lg font-bold text-white mb-4">Log New Workout</h3>
+                <form onSubmit={handleSaveWorkout} className="space-y-4 text-xs">
+                  <div>
+                    <label className="text-slate-300 block mb-1">Routine / Workout Title</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Morning 5K Run or Leg Day"
+                      value={woTitle}
+                      onChange={(e)=>setWoTitle(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-slate-300 block mb-1">Category</label>
+                      <select value={woType} onChange={(e)=>setWoType(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+                        <option>Cardio</option>
+                        <option>Strength</option>
+                        <option>HIIT</option>
+                        <option>Yoga</option>
+                        <option>Cycling</option>
+                        <option>Pilates</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-slate-300 block mb-1">Intensity</label>
+                      <select value={woIntensity} onChange={(e)=>setWoIntensity(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+                        <option>Low</option>
+                        <option>Medium</option>
+                        <option>High</option>
+                        <option>Extreme</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-slate-300 block mb-1">Duration ({woDuration} min)</label>
+                      <input
+                        type="range"
+                        min="5"
+                        max="180"
+                        step="5"
+                        value={woDuration}
+                        onChange={(e)=>setWoDuration(Number(e.target.value))}
+                        className="w-full accent-cyan-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-300 block mb-1">Calories Burned (kcal)</label>
+                      <input
+                        type="number"
+                        value={woCalories}
+                        onChange={(e)=>setWoCalories(Number(e.target.value))}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-slate-300 block mb-1">Notes (Optional)</label>
+                    <textarea
+                      rows="2"
+                      value={woNotes}
+                      onChange={(e)=>setWoNotes(e.target.value)}
+                      placeholder="Heart rate, distance, weights used..."
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                    <button type="button" onClick={()=>setIsWorkoutModalOpen(false)} className="px-4 py-2 text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold">Log Workout</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL: ADD USER */}
+          {isUserModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+              <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+                <h3 className="text-lg font-bold text-white mb-4">Create User Account</h3>
+                <form onSubmit={handleSaveUser} className="space-y-4 text-xs">
+                  <div>
+                    <label className="text-slate-300 block mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={newUserName}
+                      onChange={(e)=>setNewUserName(e.target.value)}
+                      placeholder="e.g. Alex Henderson"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-300 block mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={newUserEmail}
+                      onChange={(e)=>setNewUserEmail(e.target.value)}
+                      placeholder="alex.h@example.com"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-slate-300 block mb-1">Role</label>
+                      <select value={newUserRole} onChange={(e)=>setNewUserRole(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+                        <option>User</option>
+                        <option>Admin</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-slate-300 block mb-1">Fitness Goal</label>
+                      <select value={newUserGoal} onChange={(e)=>setNewUserGoal(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+                        <option>Weight Loss</option>
+                        <option>Muscle Hypertrophy</option>
+                        <option>Cardio Endurance</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                    <button type="button" onClick={()=>setIsUserModalOpen(false)} className="px-4 py-2 text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold">Create User</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(
+      <AppProvider>
+        <App />
+      </AppProvider>
+    );
+  </script>
+</body>
+</html>
