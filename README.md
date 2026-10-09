@@ -85,6 +85,55 @@ Follow these exact steps to open and run the Spring Boot backend inside **Intell
 
 ---
 
+## 💻 Visual Studio Code (VS Code) Setup & Run Guide
+
+The workspace includes pre-configured `.vscode` configurations (`launch.json`, `tasks.json`, `extensions.json`, `settings.json`) for 1-click execution.
+
+### Step 1: Open the Project in VS Code
+1. Open **VS Code**.
+2. Select **File ➔ Open Folder...** and choose the root `kinetiq` directory:
+   ```
+   /Users/vansh/.gemini/antigravity/scratch/kinetiq
+   ```
+   *(Or run `code /Users/vansh/.gemini/antigravity/scratch/kinetiq` from your terminal).*
+
+### Step 2: Install Recommended Extensions
+When prompted with *"Do you want to install the recommended extensions for this repository?"*, click **Install All**.
+Or install them manually from the Extensions view (`Ctrl+Shift+X` / `Cmd+Shift+X`):
+- **Extension Pack for Java** (`vscjava.vscode-java-pack`) by Microsoft
+- **Spring Boot Extension Pack** (`vmware.vscode-spring-boot`) by VMware
+- **Tailwind CSS IntelliSense** (`bradlc.vscode-tailwindcss`)
+
+### Step 3: Run Using VS Code Pre-Configured Tasks (Easiest)
+1. Open the Command Palette (`Cmd + Shift + P` on Mac, `Ctrl + Shift + P` on Windows/Linux).
+2. Type **Tasks: Run Task** and press Enter.
+3. You will see pre-configured options:
+   - **`1. Run Frontend (Vite)`**: Launches Vite dev server at `http://localhost:5173`.
+   - **`2. Run Backend (Spring Boot - H2 Zero Setup)`**: Launches Spring Boot backend at `http://localhost:8080`.
+   - **`Run Backend (Spring Boot - MySQL)`**: Launches backend targeting local MySQL.
+
+### Step 4: Run Using Terminal (Inside VS Code)
+Open the integrated terminal in VS Code (``Ctrl + ` `` or ``Cmd + ` ``):
+
+**Terminal 1 — Backend (Spring Boot):**
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+*(On Windows Command Prompt / PowerShell: `.\mvnw.cmd spring-boot:run`)*
+
+**Terminal 2 — Frontend (React / Vite):**
+```bash
+npm run dev
+```
+
+### Step 5: Debug with F5 (Run & Debug View)
+1. Press `F5` or switch to the **Run and Debug** view (`Cmd+Shift+D` / `Ctrl+Shift+D`).
+2. Select **"Spring Boot - KinetiqApplication (H2 Default)"** from the dropdown.
+3. Click the green **Play** button or press `F5` to start with breakpoints enabled!
+
+---
+
 ## 🌐 Frontend Setup & Run Guide
 
 ### Step 1: Install Node Dependencies
